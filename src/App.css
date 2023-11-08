@@ -40,3 +40,95 @@
 .read-the-docs {
   color: #888;
 }
+
+.form-paper {
+  display: flex;
+  /* align-items: center; */
+  gap: 20px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 10px;
+}
+
+.form-action {
+  margin-top: 10px;
+}
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid;
+  gap: 10px;
+}
+
+.week-names {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid;
+  padding: 5px;
+}
+
+.week-days {
+  flex: 1;
+}
+
+.week {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.day {
+  flex: 1;
+  height: 150px;
+  border: 1px solid;
+  padding: 5px;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.day:first-child {
+  margin-left: 10px;
+}
+
+.day:last-child {
+  margin-right: 10px;
+}
+
+.week:last-child .day {
+  margin-bottom: 10px;
+}
+
+.events {
+  height: calc(162px - 56px);
+  width: 158px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-title {
+  width: 100%;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+}
+
+.event-title:hover {
+  background-color: gainsboro;
+}
+
+.calendar-header {
+  margin: 15px 0px !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-navigation {
+  display: flex;
+  gap: 10px;
+}
