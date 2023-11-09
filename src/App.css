@@ -63,6 +63,7 @@
   flex-direction: column;
   border: 1px solid;
   gap: 10px;
+  flex-flow: column wrap;
 }
 
 .week-names {
@@ -77,12 +78,14 @@
 }
 
 .week {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   gap: 10px;
 }
 
 .day {
+  contain: strict;
   flex: 1;
   height: 150px;
   border: 1px solid;
@@ -105,16 +108,25 @@
 
 .events {
   height: calc(162px - 56px);
-  width: 158px;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.day:after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 .event-title {
   width: 100%;
   border-radius: 4px !important;
   cursor: pointer !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .event-title:hover {
