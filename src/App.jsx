@@ -1,5 +1,6 @@
 import "./App.css";
 import moment from "moment";
+import _ from "lodash";
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -21,6 +22,7 @@ import {
   KeyboardDoubleArrowLeft,
   KeyboardDoubleArrowRight,
 } from "@mui/icons-material";
+import dayjs from "dayjs";
 
 const weekDaysName = [
   "Sunday",
@@ -31,12 +33,37 @@ const weekDaysName = [
   "Friday",
   "Saturday",
 ];
+
+const createUniqueId = () => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
 function App() {
   const [currentCalendar, setCurrentCalendar] = useState({
     month: moment().get("month"),
     year: moment().get("year"),
   });
   const [calendarDates, setCalendarDates] = useState([]);
+  const [events, setEvents] = useState([
+    {
+      id: createUniqueId(),
+      date: moment().format("MMMM D, YYYY"),
+      eventList: [
+        {
+          id: createUniqueId(),
+          title: "sample event",
+          description: "a sample event",
+          time: moment().format("HH:mm a"),
+        },
+      ],
+    },
+  ]);
+  const [eventDetails, setEventDetails] = useState({
+    date: moment().format("MMMM D, YYYY"),
+    title: "",
+    description: "",
+    time: moment().format("HH:mm a"),
+  });
 
   useEffect(() => {
     const startDay = moment().set(currentCalendar).get("day");
@@ -104,6 +131,140 @@ function App() {
     }
   };
 
+  const DateEventList = (date) => {
+    const event = events.find((n) => n.date === date);
+
+    if (event) {
+      const eventLimit = 2;
+      return (
+        <Box className="events">
+          {event.eventList.slice(0, eventLimit).map((item, key) => (
+            <Chip
+              label={item.title}
+              className="event-title"
+              key={key}
+              onClick={() => {
+                setEventDetails({
+                  dateId: event.id,
+                  eventId: item.id,
+                  date: moment(date).format("MM/DD/YYYY"),
+                  title: item.title,
+                  description: item.description,
+                  time: moment(
+                    `${date} ${item.time.match(/\d+:\d+/g)[0]}`
+                  ).format("HH:mm a"),
+                });
+              }}
+              onDelete={() => {
+                handleDeleteEvent(event.id, item.id);
+              }}
+            />
+          ))}
+          {event.eventList.length > eventLimit && (
+            <Chip
+              label={`${event.eventList.length - eventLimit} More`}
+              style={{ borderRadius: "4px" }}
+            />
+          )}
+        </Box>
+      );
+    }
+  };
+
+  const handleCreateUpdateEvent = () => {
+    const { dateId, eventId, date, title, description, time } = eventDetails;
+    const list = _.cloneDeep(events);
+
+    const addEvent = () => {
+      const dateExisting = list.find((n) => n.date === date);
+
+      if (dateExisting) {
+        dateExisting.eventList.push({
+          id: createUniqueId(),
+          title,
+          description,
+          time,
+        });
+      } else {
+        list.push({
+          id: createUniqueId(),
+          date,
+          eventList: [{ id: createUniqueId(), title, description, time }],
+        });
+      }
+    };
+
+    // check the dateId if undefined
+    if (dateId) {
+      const currentDateDetails = list.find((n) => n.id === dateId);
+      if (currentDateDetails.date === date) {
+        currentDateDetails.eventList.push({
+          id: createUniqueId(),
+          title,
+          description,
+          time,
+        });
+      } else {
+        // check if the event is moved to another date
+        if (currentDateDetails.date === date) {
+          const event = currentDateDetails.eventList.find(
+            (n) => n.id === eventId
+          );
+
+          event.title = title;
+          event.description = description;
+          event.time = time;
+        } else {
+          addEvent();
+
+          // delete the event
+          const dateIndex = list.findIndex((n) => n.id === dateId);
+          const eventIndex = list[dateIndex].eventList.findIndex(
+            (n) => n.id === eventId
+          );
+          list[dateIndex].eventList.splice(eventIndex, 1);
+
+          // remove the date event if the date events are empty
+          if (list[dateIndex].eventList.length === 0) {
+            list.splice(dateIndex, 1);
+          }
+        }
+      }
+    } else {
+      addEvent();
+    }
+
+    setEvents(list);
+    handleResetFields();
+  };
+
+  const handleResetFields = () => {
+    setEventDetails({
+      date: moment().format("MMMM D, YYYY"),
+      title: "",
+      description: "",
+      time: moment().format("HH:mm a"),
+    });
+  };
+
+  const handleDeleteEvent = (dateId, eventId) => {
+    const list = _.cloneDeep(events);
+    const dateIndex = list.findIndex((n) => n.id === dateId);
+    const eventIndex = list[dateIndex].eventList.findIndex(
+      (n) => n.id === eventId
+    );
+
+    // delete the event
+    list[dateIndex].eventList.splice(eventIndex, 1);
+
+    // remove the date event if the date events are empty
+    if (list[dateIndex].eventList.length === 0) {
+      list.splice(dateIndex, 1);
+    }
+
+    setEvents(list);
+  };
+
   return (
     <Box>
       <Typography variant="h5">Event Setter</Typography>
@@ -111,18 +272,44 @@ function App() {
         <Box>
           <Box className="form-item">
             <Typography variant="subtitle1">Title</Typography>
-            <TextField />
+            <TextField
+              value={eventDetails.title}
+              onChange={(e) =>
+                setEventDetails({ ...eventDetails, title: e.target.value })
+              }
+            />
           </Box>
           <Box className="form-item">
             <Typography variant="subtitle1">Description</Typography>
-            <TextField maxRows={5} multiline rows={5} fullWidth />
+            <TextField
+              maxRows={5}
+              multiline
+              rows={5}
+              fullWidth
+              value={eventDetails.description}
+              onChange={(e) =>
+                setEventDetails({
+                  ...eventDetails,
+                  description: e.target.value,
+                })
+              }
+            />
           </Box>
         </Box>
         <Box>
           <Box className="form-item">
             <Typography variant="subtitle1">Date</Typography>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker />
+              <DatePicker
+                value={dayjs(moment(eventDetails.date))}
+                onChange={(newValue) =>
+                  setEventDetails({
+                    ...eventDetails,
+                    date: newValue.format("MMMM D, YYYY"),
+                  })
+                }
+                minDate={dayjs(moment().format("YYYY-MM-DD"))}
+              />
             </LocalizationProvider>
           </Box>
           <Box className="form-item">
@@ -134,15 +321,35 @@ function App() {
                   minutes: renderTimeViewClock,
                   seconds: renderTimeViewClock,
                 }}
+                value={dayjs(
+                  moment(
+                    `${eventDetails.date} ${
+                      eventDetails.time.match(/\d+:\d+/g)[0]
+                    }`
+                  ).format(`MM/DD/YYYY hh:mm a`)
+                )}
+                onChange={(newValue) =>
+                  setEventDetails({
+                    ...eventDetails,
+                    time: newValue.format("hh:mm a"),
+                  })
+                }
+                minTime={dayjs(moment().format("YYYY-MM-DD hh:mm a"))}
               />
             </LocalizationProvider>
           </Box>
         </Box>
       </Paper>
       <Paper elevation={0} className="form-paper form-action">
-        <Button variant="outlined">Cancel</Button>
-        <Button variant="contained" disableElevation>
-          Save
+        <Button variant="outlined" onClick={handleResetFields}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          disableElevation
+          onClick={handleCreateUpdateEvent}
+        >
+          {eventDetails.dateId ? "Update" : "Save"}
         </Button>
       </Paper>
       <Divider style={{ margin: "10px 0px" }} />
@@ -196,20 +403,9 @@ function App() {
                 {d !== "" && (
                   <>
                     <Typography variant="h6">{d}</Typography>
-                    <Box className="events">
-                      <Chip
-                        label="The following two divs contains a text that will not fit in the box."
-                        className="event-title"
-                      />
-                      <Chip
-                        label="The following two divs contains a text that will not fit in the box."
-                        className="event-title"
-                      />
-                      <Chip
-                        label="The following two divs contains a text that will not fit in the box."
-                        className="event-title"
-                      />
-                    </Box>
+                    {DateEventList(
+                      moment().set(currentCalendar).format(`MMMM ${d}, YYYY`)
+                    )}
                   </>
                 )}
               </Box>
